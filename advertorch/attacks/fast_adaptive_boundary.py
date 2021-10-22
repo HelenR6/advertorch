@@ -19,7 +19,7 @@ except ImportError:
     from advertorch.utils import torch_flip as flip
 
 from advertorch.utils import replicate_input
-from advertorch.attacks.utils import zero_gradients
+# from advertorch.attacks.utils import zero_gradients
 
 from .base import Attack
 from .base import LabelMixin
@@ -82,7 +82,8 @@ class FABAttack(Attack, LabelMixin):
         g2 = torch.zeros([y.shape[-1], *imgs.size()]).to(self.device)
         grad_mask = torch.zeros_like(y)
         for counter in range(y.shape[-1]):
-            zero_gradients(im)
+#             zero_gradients(im)
+            im.zero_grad()
             grad_mask[:, counter] = 1.0
             y.backward(grad_mask, retain_graph=True)
             grad_mask[:, counter] = 0.0
