@@ -62,7 +62,11 @@ def perturb_iterative(xvar, yvar, predict, nb_iter, eps, eps_iter, loss_fn,
 
     delta.requires_grad_()
     for ii in range(nb_iter):
-        outputs = predict(xvar + delta)
+        outputs_initial = predict(xvar + delta)
+        if type(outputs_initial)== tuple:
+          outputs=outputs_initial[0]
+        else:
+          outputs=outputs_initial
         loss = loss_fn(outputs, yvar)
         if minimize:
             loss = -loss
