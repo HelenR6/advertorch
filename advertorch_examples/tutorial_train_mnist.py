@@ -99,7 +99,7 @@ if __name__ == '__main__':
             test_clnloss += F.cross_entropy(
                 output, target, reduction='sum').item()
             pred = output.max(1, keepdim=True)[1]
-            clncorrect += pred.eq(target.view_as(pred)).sum().item()
+            clncorrect += pred.eq(target.reshape(pred.shape)).sum().item()
 
             if flag_advtrain:
                 advdata = adversary.perturb(clndata, target)
@@ -108,7 +108,7 @@ if __name__ == '__main__':
                 test_advloss += F.cross_entropy(
                     output, target, reduction='sum').item()
                 pred = output.max(1, keepdim=True)[1]
-                advcorrect += pred.eq(target.view_as(pred)).sum().item()
+                advcorrect += pred.eq(target.reshape(pred.shape)).sum().item()
 
         test_clnloss /= len(test_loader.dataset)
         print('\nTest set: avg cln loss: {:.4f},'
