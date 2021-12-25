@@ -54,7 +54,7 @@ if __name__ == '__main__':
     # create model
     print("=> creating model '{}'".format(args.arch))
     model = models.__dict__[args.arch]()
-    
+    ngpus_per_node = torch.cuda.device_count()
     if args.pretrained:
         if os.path.isfile(args.pretrained):
             print("=> loading checkpoint '{}'".format(args.pretrained))
@@ -64,13 +64,15 @@ if __name__ == '__main__':
     if args.mode == "cln":
         flag_advtrain = False
         nb_epoch = 10
-        model_filename = "mnist_lenet5_clntrained.pt"
+        model_filename = "imagenet_moco_clntrained.pt"
     elif args.mode == "adv":
         flag_advtrain = True
         nb_epoch = 90
-        model_filename = "mnist_lenet5_advtrained.pt"
+        model_filename = "imagenet_moco_advtrained.pt"
     else:
         raise
+    model = torch.nn.DataParallel(model).cuda()
+
 
 #     train_loader = get_mnist_train_loader(
 #         batch_size=args.train_batch_size, shuffle=True)
