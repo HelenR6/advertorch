@@ -37,10 +37,8 @@ if __name__ == '__main__':
     parser.add_argument('--test_batch_size', default=1000, type=int)
     parser.add_argument('--log_interval', default=200, type=int)
     parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet18',
-                    choices=model_names,
-                    help='model architecture: ' +
-                        ' | '.join(model_names) +
-                        ' (default: resnet18)')
+                    
+                    help='model architecture: ' )
     parser.add_argument('--pretrained',  default='', type=str,
                     help='use pre-trained model')
     parser.add_argument('-j', '--workers', default=32, type=int, metavar='N',
@@ -59,7 +57,7 @@ if __name__ == '__main__':
         if os.path.isfile(args.pretrained):
             print("=> loading checkpoint '{}'".format(args.pretrained))
             checkpoint = torch.load(args.pretrained)
-        model.load_state_dict(checkpoint['state_dict'])
+            model.load_state_dict(checkpoint['state_dict'])
     
     if args.mode == "cln":
         flag_advtrain = False
