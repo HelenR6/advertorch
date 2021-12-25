@@ -14,6 +14,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import torch.utils.data
+import torch.utils.data.distributed
+import torchvision.transforms as transforms
+import torchvision.datasets as datasets
+import torchvision.models as models
 
 from advertorch.context import ctx_noparamgrad_and_eval
 from advertorch.test_utils import LeNet5
@@ -23,17 +28,39 @@ from advertorch_examples.utils import TRAINED_MODEL_PATH
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Train MNIST')
+    parser = argparse.ArgumentParser(description='Train ImageNet')
+    parser.add_argument('data', metavar='DIR',
+                    help='path to dataset')
     parser.add_argument('--seed', default=0, type=int)
     parser.add_argument('--mode', default="cln", help="cln | adv")
     parser.add_argument('--train_batch_size', default=50, type=int)
     parser.add_argument('--test_batch_size', default=1000, type=int)
     parser.add_argument('--log_interval', default=200, type=int)
+    parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet18',
+                    choices=model_names,
+                    help='model architecture: ' +
+                        ' | '.join(model_names) +
+                        ' (default: resnet18)')
+    parser.add_argument('--pretrained',  default='', type=str,
+                    help='use pre-trained model')
+    parser.add_argument('-j', '--workers', default=32, type=int, metavar='N',
+                        help='number of data loading workers (default: 32)')
+    
     args = parser.parse_args()
 
     torch.manual_seed(args.seed)
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
+    # create model
+    print("=> creating model '{}'".format(args.arch))
+    model = models.__dict__[args.arch]()
+    
+    if args.pretrained:
+        if os.path.isfile(args.pretrained):
+            print("=> loading checkpoint '{}'".format(args.pretrained))
+            checkpoint = torch.load(args.pretrained)
+        model.load_state_dict(checkpoint['state_dict'])
+    
     if args.mode == "cln":
         flag_advtrain = False
         nb_epoch = 10
@@ -45,12 +72,39 @@ if __name__ == '__main__':
     else:
         raise
 
-    train_loader = get_mnist_train_loader(
-        batch_size=args.train_batch_size, shuffle=True)
-    test_loader = get_mnist_test_loader(
-        batch_size=args.test_batch_size, shuffle=False)
+#     train_loader = get_mnist_train_loader(
+#         batch_size=args.train_batch_size, shuffle=True)
+#     test_loader = get_mnist_test_loader(
+#         batch_size=args.test_batch_size, shuffle=False)
+    # Data loading code
+    traindir = os.path.join(args.data, 'train')
+    valdir = os.path.join(args.data, 'val')
+    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])
 
-    model = LeNet5()
+    train_dataset = datasets.ImageFolder(
+        traindir,
+        transforms.Compose([
+            transforms.RandomResizedCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            normalize,
+        ]))
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=args.train_batch_size, shuffle=(train_sampler is None),
+        num_workers=args.workers, pin_memory=True, sampler=train_sampler)
+    test_loader = torch.utils.data.DataLoader(
+    datasets.ImageFolder(valdir, transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        normalize,
+    ])),
+    batch_size=args.test_batch_size, shuffle=False,
+    num_workers=args.workers, pin_memory=True)
+
+
+#     model = LeNet5()
     model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
