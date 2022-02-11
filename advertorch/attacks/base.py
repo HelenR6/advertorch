@@ -25,13 +25,14 @@ class Attack(object):
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, predict, loss_fn, clip_min, clip_max,flag):
+#     def __init__(self, predict, loss_fn, clip_min, clip_max,flag):
+    def __init__(self, predict, loss_fn, clip_min, clip_max):
         """Create an Attack instance."""
         self.predict = predict
         self.loss_fn = loss_fn
         self.clip_min = clip_min
         self.clip_max = clip_max
-        self.flag=flag
+#         self.flag=flag
 
     def perturb(self, x, **kwargs):
         """Virtual method for generating the adversarial examples.
